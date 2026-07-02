@@ -5,6 +5,9 @@ from pyspark.sql.types import (
     DoubleType, IntegerType, BooleanType
 )
 
+
+from pyspark.sql import SparkSession
+
 spark = (
     SparkSession.builder
     .appName("ShipmentKafkaToBronze")
@@ -19,6 +22,7 @@ spark = (
     .getOrCreate()
 )
 
+
 schema = StructType([
     StructField("event_id", StringType()),
     StructField("shipment_id", StringType()),
@@ -32,6 +36,7 @@ schema = StructType([
     StructField("fuel_level_pct", IntegerType()),
     StructField("is_fragile", BooleanType()),
     StructField("estimated_delivery_minutes", IntegerType()),
+    StructField("elapsed_minutes", IntegerType()),
     StructField("event_time", StringType())
 ])
 
@@ -44,19 +49,23 @@ raw_df = (
     .load()
 )
 
-print("raw_df ============",raw_df)
+
 
 parsed_df = (
     raw_df
     .select(
+        #converts binary to string
         col("key").cast("string").alias("kafka_key"),
         col("value").cast("string").alias("raw_json"),
+        # renaming to meaningful names 
         col("topic").alias("kafka_topic"),
         col("partition").alias("kafka_partition"),
         col("offset").alias("kafka_offset"),
         col("timestamp").alias("kafka_timestamp")
     )
+    # parses the JSON according to your schema, creates new column data
     .withColumn("data", from_json(col("raw_json"), schema))
+    # data is still single struct and also it contains all the fields inside it,
     .select(
         "kafka_key",
         "raw_json",
@@ -64,19 +73,43 @@ parsed_df = (
         "kafka_partition",
         "kafka_offset",
         "kafka_timestamp",
+          # col("data.*") expands the struct into individual columns.
         col("data.*")
+        
     )
+    # new column
     .withColumn("ingestion_timestamp", current_timestamp())
 )
 
-print("parsed data ================",  parsed_df)
+
+
+
+
+
+
+def process_batch(df, batch_id):
+    print(f"\n========== Batch {batch_id} ==========")
+
+    offsets = df.select("kafka_offset").collect()
+
+    if offsets:
+        print(f"Processing offsets {offsets[0][0]} -> {offsets[-1][0]}")
+
+    (
+        df.write
+        .format("delta")
+        .mode("append")
+        .save("delta/bronze/shipments")
+    )
 
 query = (
     parsed_df.writeStream
-    .format("delta")
-    .outputMode("append")
+    .foreachBatch(process_batch)
     .option("checkpointLocation", "delta/checkpoints/bronze_shipments")
-    .start("delta/bronze/shipments")
+    .start()
 )
 
 query.awaitTermination()
+
+
+
