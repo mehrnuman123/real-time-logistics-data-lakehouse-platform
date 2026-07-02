@@ -3,10 +3,9 @@ import random
 import time
 import uuid
 from datetime import datetime, timezone
-from faker import Faker
+
 from kafka import KafkaProducer
 
-fake = Faker()
 
 KAFKA_BOOTSTRAP_SERVER = "localhost:9092"
 TOPIC_NAME = "shipment_events"
