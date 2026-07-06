@@ -1,115 +1,67 @@
 # 🚚 Real-Time Logistics Data Platform
 
-A production-style end-to-end data engineering project that simulates a real-time logistics platform.
-
-The project ingests shipment events into Kafka, processes them using PySpark Structured Streaming, stores them in a Delta Lake using the Medallion Architecture (Bronze → Silver → Gold), builds a Star Schema for analytics, and orchestrates batch transformations using Apache Airflow.
+A production-style end-to-end data engineering project that simulates real-time shipment events, processes them using Apache Spark Structured Streaming, stores data in a Delta Lake following the Medallion Architecture (Bronze → Silver → Gold), builds a Star Schema for analytics, orchestrates workflows with Apache Airflow, and loads curated data into Snowflake.
 
 ---
 
-# Architecture
+## Architecture
 
 ```text
-                      Shipment Producer
-                             │
-                             ▼
-                        Apache Kafka
-                             │
-                             ▼
-               Spark Structured Streaming
-                             │
-                             ▼
-                    Bronze Delta Layer
-                             │
-                  (Airflow Scheduled)
-                             ▼
-                    Silver Delta Layer
-                             │
-                  (Airflow Scheduled)
-                             ▼
-                  Gold Star Schema
-                             │
-                             ▼
-                 Analytics Data Marts
+Shipment Producer
+        │
+        ▼
+Apache Kafka
+        │
+        ▼
+Spark Structured Streaming
+        │
+        ▼
+Bronze (Delta Lake)
+        │
+        ▼
+Silver (Delta Lake)
+        │
+        ▼
+Gold Star Schema (Delta Lake)
+        │
+        ▼
+Analytics KPI Marts
+        │
+        ▼
+Snowflake
 ```
 
 ---
 
-# Technologies
+## Tech Stack
 
-| Technology | Purpose |
-|------------|---------|
-| Python | Producer & ETL |
-| Apache Kafka | Real-time event streaming |
-| PySpark Structured Streaming | Stream processing |
-| Delta Lake | Lakehouse storage |
-| Apache Airflow | Workflow orchestration |
-| Docker | Containerization |
-| PostgreSQL | Airflow metadata database |
-| Git & GitHub | Version Control |
+- Python
+- Apache Kafka
+- PySpark Structured Streaming
+- Delta Lake
+- Apache Airflow
+- Snowflake
+- Docker
+- PostgreSQL
+- Git & GitHub
 
 ---
 
-# Project Features
+## Features
 
-- Real-time shipment event simulation
-- Kafka message streaming
+- Simulated real-time shipment event streaming
+- Kafka-based event ingestion
 - Spark Structured Streaming consumer
-- Bronze, Silver and Gold Delta Lake architecture
-- Data quality validation
-- Business rule transformations
+- Delta Lake Medallion Architecture
+- Data validation and business transformations
 - Star Schema dimensional modeling
-- KPI data marts
-- Apache Airflow orchestration
-- Dockerized infrastructure
+- Gold KPI marts for analytics
+- Airflow workflow orchestration
+- Snowflake data warehouse integration
 
 ---
 
-
-## Delta Lake Implementation
-
-This project uses Delta Lake as the storage layer for the Medallion Architecture.
-
-Implemented features:
-
-- Delta format storage
-- Bronze / Silver / Gold architecture
-- Streaming writes from Spark Structured Streaming
-- Batch reads for downstream transformations
-- ACID-compliant storage
-- Checkpointing for reliable stream processing
-- Schema enforcement using Spark
-
-# Medallion Architecture
-
-## Bronze
-
-Raw immutable shipment events.
-
-Example:
-
-- Kafka metadata
-- Raw JSON
-- Ingestion timestamp
-
----
-
-## Silver
-
-Validated and standardized data.
-
-Transformations include:
-
-- Remove duplicates
-- Validate required fields
-- Convert timestamps
-- Risk calculations
-- Delivery progress tracking
-
----
-
-## Gold
-
-Business-ready analytical model.
+## Data Model
 
 ### Dimension Tables
 
@@ -117,146 +69,74 @@ Business-ready analytical model.
 - dim_vehicle
 - dim_warehouse
 - dim_destination
+- dim_status
+- dim_date
 
 ### Fact Table
 
 - fact_shipment_events
 
----
+### KPI Marts
 
-# KPI Marts
-
-The project builds analytical marts including:
-
-- Warehouse KPIs
-- Driver Performance
-- Vehicle Health
-- Shipment Status Summary
+- warehouse_kpi
+- driver_kpi
+- vehicle_kpi
+- status_kpi
+- daily_kpi
 
 ---
 
-# Airflow DAG
-
-The workflow orchestrates the following tasks:
-
-```text
-Bronze
-    ↓
-Silver
-    ↓
-Gold Star Schema
-    ↓
-Gold KPI Marts
-```
-
----
-
-# Shipment Lifecycle
-
-Each shipment progresses through realistic logistics states.
-
-```text
-CREATED
-      ↓
-PICKED_UP
-      ↓
-IN_TRANSIT
-      ↓
-ARRIVED_AT_HUB
-      ↓
-OUT_FOR_DELIVERY
-      ↓
-DELIVERED
-```
-
----
-
-# Folder Structure
+## Project Structure
 
 ```text
 .
 ├── airflow/
-│   └── dags/
 ├── producer/
 ├── spark/
+├── docker/
 ├── delta/
 │   ├── bronze/
 │   ├── silver/
 │   └── gold/
-├── docker/
-├── requirements.txt
 └── README.md
 ```
 
 ---
 
-# Running the Project
-
-## 1. Start infrastructure
-
-```bash
-docker compose up -d
-```
-
----
-
-## 2. Start Shipment Producer
-
-```bash
-python producer/shipment_producer.py
-```
-
----
-
-## 3. Start Spark Streaming Consumer
-
-```bash
-python spark/streaming_consumer.py
-```
-
----
-
-## 4. Trigger Airflow Pipeline
+## Workflow
 
 ```text
+Producer
+   ↓
+Kafka
+   ↓
+Spark Streaming
+   ↓
 Bronze
-→ Silver
-→ Gold
-→ KPI Marts
+   ↓
+Airflow
+   ↓
+Silver
+   ↓
+Gold Star Schema
+   ↓
+KPI Marts
+   ↓
+Snowflake
 ```
 
 ---
 
-# Future Improvements
+## Future Improvements
 
-- Snowflake Data Warehouse integration
-- dbt transformations
-- Streamlit / Power BI dashboard
-- Data quality tests with Great Expectations
-- CI/CD pipeline using GitHub Actions
+- Incremental MERGE-based processing
+- Data quality testing (Great Expectations)
+- Power BI / Streamlit dashboards
+- CI/CD with GitHub Actions
 - Kubernetes deployment
-- Monitoring with Prometheus & Grafana
 
 ---
 
-# Skills Demonstrated
+## Author
 
-- Data Engineering
-- Streaming Data Processing
-- Event-Driven Architecture
-- ETL / ELT
-- Medallion Architecture
-- Star Schema Modeling
-- Data Lakehouse
-- Apache Spark
-- Apache Kafka
-- Apache Airflow
-- Docker
-- Python
-- Delta Lake
-
----
-
-# Author
-
-Muhammad Numan
+**Muhammad Numan**
