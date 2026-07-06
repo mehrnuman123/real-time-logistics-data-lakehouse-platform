@@ -4,14 +4,14 @@ from datetime import datetime
 
 default_args = {
     "owner": "numan",
-    "retries": 1,
+    "retries": 2,
 }
 
 with DAG(
     dag_id="logistics_streaming_batch_pipeline",
     default_args=default_args,
-    start_date=datetime(2026, 1, 1),
-    schedule_interval="@hourly",
+    start_date=datetime(2026, 7, 3),
+    schedule=None,
     catchup=False,
     tags=["logistics", "spark", "delta"],
 ) as dag:
@@ -30,5 +30,10 @@ with DAG(
         task_id="gold_kpi_marts",
         bash_command="cd /opt/airflow && python spark/gold_kpi_marts.py",
     )
+    
+    load_gold_to_snowflake = BashOperator(
+    task_id="load_gold_to_snowflake",
+    bash_command="cd /opt/airflow && python spark/load_gold_to_snowflake.py",
+    )
 
-    bronze_to_silver >> silver_to_gold >> gold_kpi_marts
+    bronze_to_silver >> silver_to_gold >> gold_kpi_marts >> load_gold_to_snowflake

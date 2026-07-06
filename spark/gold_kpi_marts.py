@@ -6,8 +6,12 @@ warehouse = spark.read.format("delta").load("delta/gold/dim_warehouse")
 driver = spark.read.format("delta").load("delta/gold/dim_driver")
 vehicle = spark.read.format("delta").load("delta/gold/dim_vehicle")
 
+status = spark.read.format("delta").load("delta/gold/dim_status")
+date = spark.read.format("delta").load("delta/gold/dim_date")
+
 warehouse_kpi = (
     fact.join(warehouse, "warehouse_sk")
+        .join(status, "status_sk")
     .groupBy("warehouse")
     .agg(
         countDistinct("shipment_id").alias("total_shipments"),
@@ -19,6 +23,7 @@ warehouse_kpi = (
 
 driver_kpi = (
     fact.join(driver, "driver_sk")
+        .join(status, "status_sk")
     .groupBy("driver_id")
     .agg(
         countDistinct("shipment_id").alias("shipments_handled"),
@@ -39,17 +44,31 @@ vehicle_kpi = (
 )
 
 status_kpi = (
-    fact.groupBy("status")
+    fact.join(status, "status_sk")
+    .groupBy("status", "delivery_progress")
     .agg(
         count("*").alias("total_events"),
         countDistinct("shipment_id").alias("total_shipments")
     )
 )
 
+daily_kpi = (
+    fact.join(date, "date_sk")
+    .groupBy("event_date", "year", "month", "day")
+    .agg(
+        count("*").alias("total_events"),
+        countDistinct("shipment_id").alias("total_shipments"),
+        count(when(col("is_delayed") == True, True)).alias("delayed_events")
+    )
+)
+
+
 warehouse_kpi.write.format("delta").mode("overwrite").save("delta/gold/marts/warehouse_kpi")
 driver_kpi.write.format("delta").mode("overwrite").save("delta/gold/marts/driver_kpi")
 vehicle_kpi.write.format("delta").mode("overwrite").save("delta/gold/marts/vehicle_kpi")
 status_kpi.write.format("delta").mode("overwrite").save("delta/gold/marts/status_kpi")
+daily_kpi.write.format("delta").mode("overwrite").save("delta/gold/marts/daily_kpi")
+
 
 print("Gold KPI marts created")
 

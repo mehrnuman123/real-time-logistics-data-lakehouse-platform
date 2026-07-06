@@ -1,3 +1,5 @@
+from delta.tables import DeltaTable
+from pathlib import Path
 from spark_session import spark
 from pyspark.sql.functions import col, to_timestamp, when
 
@@ -42,7 +44,27 @@ silver_df = (
     )
 )
 
-silver_df.write.format("delta").mode("overwrite").save("delta/silver/shipments")
+
+silver_path = "delta/silver/shipments"
+
+#Delta MERGE / incremental upsert
+
+if DeltaTable.isDeltaTable(spark, silver_path):
+    silver_table = DeltaTable.forPath(spark, silver_path)
+
+    (
+        silver_table.alias("target")
+        .merge(
+            silver_df.alias("source"),
+            "target.event_id = source.event_id"
+        )
+        .whenMatchedUpdateAll()
+        .whenNotMatchedInsertAll()
+        .execute()
+    )
+
+else:
+    silver_df.write.format("delta").mode("overwrite").save(silver_path)
 
 print("Silver rebuilt")
 print("Rows:", silver_df.count())

@@ -1,5 +1,5 @@
 from spark_session import spark
-from pyspark.sql.functions import col, monotonically_increasing_id
+from pyspark.sql.functions import col, monotonically_increasing_id, to_date, year, month, dayofmonth, hour
 
 df = spark.read.format("delta").load("delta/silver/shipments")
 
@@ -31,12 +31,39 @@ dim_destination = (
     .withColumn("destination_sk", monotonically_increasing_id())
 )
 
+
+dim_status = (
+    df.select("status", "delivery_progress")
+    .dropDuplicates()
+    .filter(col("status").isNotNull())
+    .withColumn("status_sk", monotonically_increasing_id())
+)
+
+dim_date = (
+    df.select(
+        to_date(col("event_timestamp")).alias("event_date"),
+        year(col("event_timestamp")).alias("year"),
+        month(col("event_timestamp")).alias("month"),
+        dayofmonth(col("event_timestamp")).alias("day"),
+        hour(col("event_timestamp")).alias("hour")
+    )
+    .dropDuplicates()
+    .filter(col("event_date").isNotNull())
+    .withColumn("date_sk", monotonically_increasing_id())
+)
+
 fact_shipment_events = (
     df
     .join(dim_driver, "driver_id", "left")
     .join(dim_vehicle, "vehicle_id", "left")
     .join(dim_warehouse, "warehouse", "left")
     .join(dim_destination, "destination", "left")
+    .join(dim_status, ["status", "delivery_progress"], "left")
+    .join(
+        dim_date,
+        to_date(df.event_timestamp) == dim_date.event_date,
+        "left"
+    )
     .select(
         "event_id",
         "shipment_id",
@@ -44,8 +71,8 @@ fact_shipment_events = (
         "vehicle_sk",
         "warehouse_sk",
         "destination_sk",
-        "status",
-        "delivery_progress",
+        "status_sk",
+        "date_sk",
         "temperature_c",
         "vehicle_speed_kmh",
         "fuel_level_pct",
@@ -60,11 +87,14 @@ fact_shipment_events = (
     )
 )
 
+
 dim_driver.write.format("delta").mode("overwrite").save("delta/gold/dim_driver")
 dim_vehicle.write.format("delta").mode("overwrite").save("delta/gold/dim_vehicle")
 dim_warehouse.write.format("delta").mode("overwrite").save("delta/gold/dim_warehouse")
 dim_destination.write.format("delta").mode("overwrite").save("delta/gold/dim_destination")
 fact_shipment_events.write.format("delta").mode("overwrite").save("delta/gold/fact_shipment_events")
+dim_status.write.format("delta").mode("overwrite").save("delta/gold/dim_status")
+dim_date.write.format("delta").mode("overwrite").save("delta/gold/dim_date")
 
 print("Gold star schema rebuilt")
 

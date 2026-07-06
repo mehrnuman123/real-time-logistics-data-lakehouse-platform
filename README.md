@@ -64,6 +64,21 @@ The project ingests shipment events into Kafka, processes them using PySpark Str
 
 ---
 
+
+## Delta Lake Implementation
+
+This project uses Delta Lake as the storage layer for the Medallion Architecture.
+
+Implemented features:
+
+- Delta format storage
+- Bronze / Silver / Gold architecture
+- Streaming writes from Spark Structured Streaming
+- Batch reads for downstream transformations
+- ACID-compliant storage
+- Checkpointing for reliable stream processing
+- Schema enforcement using Spark
+
 # Medallion Architecture
 
 ## Bronze
