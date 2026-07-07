@@ -9,21 +9,26 @@ A production-style end-to-end data engineering project that simulates real-time 
 
 # Project Output
 
-## Pipeline Architecture
+## Producer and consumer log
 
-<img src="output_images/architecture.png" width="900">
-
----
-
-## Airflow DAG
-
-<img src="output_images/airflow_dag_success.png" width="900">
+<img src="output_images/procducer_consumer.JPG" width="900">
 
 ---
 
-## Snowflake Gold Layer
+## Kafka ui
 
-<img src="output_images/snowflake_tables.png" width="900">
+<img src="output_images/kafka_ui.JPG" width="900">
+
+---
+
+## Airflow dag
+
+<img src="output_images/airflow.JPG" width="900">
+
+
+## Snowflake fact table
+
+<img src="output_images/snowflake_fact_shipment.JPG" width="900">
 
 
 
