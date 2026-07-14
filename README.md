@@ -114,20 +114,6 @@ Snowflake
 
 ---
 
-## Project Structure
-
-```text
-.
-├── airflow/
-├── producer/
-├── spark/
-├── docker/
-├── delta/
-│   ├── bronze/
-│   ├── silver/
-│   └── gold/
-└── README.md
-```
 
 ---
 
